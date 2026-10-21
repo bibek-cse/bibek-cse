@@ -52,5 +52,3 @@ I'm a **Research Scholar in Computer Science & Engineering at IIT Patna**, worki
 ---
 
 <p align="center"><i>"Your work reflects your character."</i></p>
-
-<sub>Card design adapted from <a href="https://github.com/Andrew6rant/Andrew6rant">Andrew6rant</a>. Stats refresh daily via GitHub Actions.</sub>
