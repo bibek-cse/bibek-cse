@@ -14,9 +14,9 @@ HEADER = "bibek@iitp"
 # Keys with a dot (e.g. "Research.Forensics") get both parts coloured like the original.
 PROFILE = [
     ("OS", "Ubuntu, Windows 11"),
-    ("Uptime", "__AGE__"),                     # filled in daily by today.py
-    ("Host", "Indian Institute of Technology Patna"),
-    ("Kernel", "PhD Scholar, Computer Science & Engg."),
+    # ("Uptime", "__AGE__"),                     # filled in daily by today.py
+    # ("Host", "Indian Institute of Technology Patna"),
+    ("Kernel", "Research Scholar, CSE"),
     ("IDE", "VSCode, Jupyter, Vim on SSH"),
     None,
     ("Languages.Programming", "Python, Java"),
