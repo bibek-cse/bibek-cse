@@ -13,25 +13,25 @@ HEADER = "bibek@iitp"
 # Each section is a list of rows. A row is (key, value), None for a blank "." line.
 # Keys with a dot (e.g. "Research.Forensics") get both parts coloured like the original.
 PROFILE = [
-    ("OS", "Ubuntu (Param Rudra HPC), Windows 11"),
+    ("OS", "Ubuntu, Windows 11"),
     ("Uptime", "__AGE__"),                     # filled in daily by today.py
     ("Host", "Indian Institute of Technology Patna"),
     ("Kernel", "PhD Scholar, Computer Science & Engg."),
     ("IDE", "VSCode, Jupyter, Vim on SSH"),
     None,
-    ("Languages.Programming", "Python, C++, Bash, MATLAB"),
+    ("Languages.Programming", "Python, Java"),
     ("Languages.Frameworks", "PyTorch, OpenCV, HF, timm"),
     ("Languages.Real", "English, Hindi, Bengali"),
     None,
     ("Research.Provenance", "Image/Video Watermarking"),
     ("Research.Forensics", "Deepfakes, Forgery Localization"),
-    ("Research.Venues", "CVPR, ICPR, ICONIP, IEEE Trans."),
+    ("Research.Venues", "ICPR, ICONIP, IEEE TBIOM"), 
 ]
 
 CONTACT = [
-    ("Email.Academic", "your_id@iitp.ac.in"),         # <-- EDIT ME
+    ("Email.Academic", "bibekdas.cse@gmail.com"),         
     ("Kaggle", "bibekcse"),
-    ("LinkedIn", "your-linkedin-handle"),             # <-- EDIT ME
+    ("LinkedIn", "https://in.linkedin.com/in/bibek6612"),             
     ("Scholar", "Bibek Das"),
 ]
 
