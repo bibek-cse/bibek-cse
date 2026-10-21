@@ -24,7 +24,7 @@ PROFILE = [
     ("Languages.Real", "English, Hindi, Bengali"),
     None,
     ("Research.Provenance", "Image/Video Watermarking"),
-    ("Research.Forensics", "Deepfakes, Forgery Localization"),
+    ("Research.Forensics", "Deepfakes, Biometric"),
     ("Research.Venues", "ICPR, ICONIP, IEEE TBIOM"), 
 ]
 
