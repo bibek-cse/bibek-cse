@@ -30,7 +30,7 @@ PROFILE = [
 
 CONTACT = [
     ("Email.Academic", "bibekdas.cse@gmail.com"),         
-    ("Kaggle", "bibekcse"),
+    ("Kaggle", "bibek.cse"),
     ("LinkedIn", "https://in.linkedin.com/in/bibek6612"),             
     ("Scholar", "Bibek Das"),
 ]
