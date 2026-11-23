@@ -15,6 +15,7 @@ USER_NAME = os.environ.get('USER_NAME', 'bibek-cse')
 
 # >>> EDIT ME: your date of birth (year, month, day) — drives the 'Uptime' line <<<
 BIRTHDAY = datetime.datetime(2001, 1, 12)
+os.makedirs('cache', exist_ok=True)
 QUERY_COUNT = {'user_getter': 0, 'follower_getter': 0, 'graph_repos_stars': 0, 'recursive_loc': 0, 'graph_commits': 0, 'loc_query': 0}
 
 
@@ -321,23 +322,20 @@ def stars_counter(data):
 
 def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib_data, follower_data, loc_data):
     """
-    Parse SVG files and update elements with my age, commits, stars, repositories, and lines written.
-    Dot lengths are computed so every line stays exactly 60 characters wide.
+    Parse the SVG card and write the live numbers into their id'd elements.
+    The forensic-report layout uses fixed columns, so no dot-justification is needed.
     """
     tree = etree.parse(filename)
     root = tree.getroot()
     fmt = lambda v: '{:,}'.format(v) if isinstance(v, int) else str(v)
-    justify_format(root, 'age_data', age_data, 49)
-    justify_format(root, 'commit_data', commit_data, 23)
-    justify_format(root, 'follower_data', follower_data, 10)
-    justify_format(root, 'repo_data', repo_data, 6)
-    justify_format(root, 'contrib_data', contrib_data)
-    # Repos line: ". Repos:" + repo(8) + " {Contributed: " + contrib + "} | Stars:" + star  == 60
-    justify_format(root, 'star_data', star_data, 60 - 8 - 8 - 15 - len(fmt(contrib_data)) - 10 - 2)
-    # LOC line: ". Lines of Code on GitHub:" + total + " ( " + add + "++, " + del + "-- )" == 60
-    justify_format(root, 'loc_add', loc_data[0])
-    justify_format(root, 'loc_del', loc_data[1], len(loc_data[1]) + 1)
-    justify_format(root, 'loc_data', loc_data[2], 60 - 26 - 2 - 3 - len(loc_data[0]) - 4 - (len(loc_data[1]) + 1) - 4)
+    values = {
+        'age_data': age_data.replace(' 🎂', '') + (' 🎂' if '🎂' in age_data else ''),
+        'commit_data': commit_data, 'star_data': star_data, 'repo_data': repo_data,
+        'contrib_data': contrib_data, 'follower_data': follower_data,
+        'loc_add': loc_data[0], 'loc_del': loc_data[1], 'loc_data': loc_data[2],
+    }
+    for element_id, value in values.items():
+        find_and_replace(root, element_id, fmt(value))
     tree.write(filename, encoding='utf-8', xml_declaration=True)
 
 
