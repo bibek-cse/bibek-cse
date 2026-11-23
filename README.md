@@ -37,6 +37,9 @@
 | **D** | [**AI GATE Quest**](https://bibek-cse.github.io/ai-gate-quest/) | A game that teaches ML, DL, LLMs, DSA and maths for AI one question at a time |
 | **E** | [**Image Edit Studio**](https://github.com/bibek-cse/image-edit-studio) | A free browser front-end for open image-editing models (Qwen-Image-Edit, FLUX Kontext, SDXL) |
 
+<!-- LAB:START -->
+<!-- LAB:END -->
+
 ### 🎭 Two truths and a deepfake
 
 1. I teach Java & DSA labs, and I turn the lab quizzes into games for my students.
