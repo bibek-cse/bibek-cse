@@ -40,7 +40,7 @@
 ### 🎭 Two truths and a deepfake
 
 1. I teach Java & DSA labs, and I turn the lab quizzes into games for my students.
-2. The ASCII portrait in the card above was generated from a real photo.
+2. The portrait in the card is my real photo, drawn only with 0s and 1s, and those digits spell out my bio.
 3. I once trained a detector so good it flagged my own selfie as fake.
 
 <details>
@@ -50,15 +50,18 @@
 **#3 is the fake.** My detectors still think I'm real (`face_0 · REAL · 0.997`). The other two are true.
 </details>
 
-### 🔍 Watermark challenge
+### 🔍 Decode the card
 
-The card at the top carries a **40-bit invisible watermark**, the same idea I work on, scaled down to something you can decode by hand.
+The card at the top hides two messages, the same idea I work on, scaled down to something you can decode by hand.
+
+1. **The portrait is data.** Every 0 and 1 in my face is one bit. Brightness only changes how strongly a digit is drawn.
+2. **There's an invisible watermark.** 40 near-invisible cells sit along the bottom edge of the card.
 
 <details>
-<summary><b>Hint</b></summary>
+<summary><b>Hints</b></summary>
 <br/>
 
-Open the raw SVG and look along its bottom edge. There are 40 cells: a cell that's present is a <code>1</code> and a gap is a <code>0</code>. Read them MSB first, 8 bits per ASCII character.
+Open the raw SVG. For the portrait, read the digits row by row, left to right (sort by <code>y</code>, then <code>x</code>), 8 bits per ASCII character. For the watermark, a cell that's present is a <code>1</code> and a gap is a <code>0</code>, read MSB first.
 </details>
 
 <details>
@@ -68,12 +71,21 @@ Open the raw SVG and look along its bottom edge. There are 40 cells: a cell that
 ```python
 import re, requests
 svg = requests.get("https://raw.githubusercontent.com/bibek-cse/bibek-cse/main/dark_mode.svg").text
-wm  = svg.split('<g id="wm"')[1].split("</g>")[0]
-x0, bits = (985 - 240) // 2, ["0"] * 40
+
+# 1) the portrait
+cells = []
+for y, xs, ds in re.findall(r'<text class="[pb][b0-9]" y="([\d.]+)" x="([^"]+)">([01]+)</text>', svg):
+    cells += [(float(y), float(x), d) for x, d in zip(xs.split(), ds)]
+bits = "".join(d for *_, d in sorted(cells))
+print(bytes(int(bits[i:i + 8], 2) for i in range(0, len(bits) - 7, 8)).decode())
+
+# 2) the watermark
+wm = svg.split('<g id="wm"')[1].split("</g>")[0]
+x0, w = (985 - 240) // 2, ["0"] * 40
 for x in map(int, re.findall(r'x="(\d+)"', wm)):
-    bits[(x - x0) // 6] = "1"
-b = "".join(bits)
-print("".join(chr(int(b[i:i + 8], 2)) for i in range(0, 40, 8)))
+    w[(x - x0) // 6] = "1"
+w = "".join(w)
+print("".join(chr(int(w[i:i + 8], 2)) for i in range(0, 40, 8)))
 ```
 </details>
 

@@ -6,7 +6,9 @@ The card at the top of the profile is generated: **don't hand-edit the SVGs**, s
 - `build_svg.py` holds everything in the config block at the top: `SUBJECT`, `SIGNALS` (bar lengths),
   `STACK`, `CONTACT`, `VERIFY_LINE`, the colour `THEMES`, and the hidden `WATERMARK` (exactly 5 ASCII chars).
 - `BIRTHDAY` is defined in both `build_svg.py` and `today.py`; keep them the same.
-- New portrait: `python ascii_art.py photo.jpg` writes `cache/ascii.txt` (36 x 25 max).
+- New portrait: `pip install opencv-python numpy`, then `python binary_portrait.py photo.jpg`. This removes the
+  background and writes `cache/portrait.json` (brightness grid + bits). The photo itself is never stored in the repo.
+  The text the 0s and 1s spell out is `PAYLOAD` in `binary_portrait.py`.
 - Run `python build_svg.py`. It stops with an error if the right column overflows.
 - Preview locally by opening `dark_mode.svg` in a browser (the animations run there too).
 

@@ -2,7 +2,7 @@
 Builds dark_mode.svg and light_mode.svg: a "forensic report" profile card.
 
 The card treats the profile itself as a piece of media under analysis:
-  - the ASCII portrait gets a face-detection box, an authenticity heat-map and a sweeping scan line
+  - the binary portrait (0s and 1s that spell out my bio) gets a face-detection box, an authenticity heat-map and a sweeping scan line
   - research areas show up as "signals", live GitHub numbers as "telemetry"
   - a 40-bit invisible watermark is hidden in the bottom edge of the card (payload below)
 
@@ -11,6 +11,7 @@ today.py (GitHub Action) only refreshes the ids listed in LIVE_IDS; everything e
 """
 import datetime
 import hashlib
+import json
 from xml.sax.saxutils import escape
 
 # ----------------------------------------------------------------------------- config
@@ -36,6 +37,12 @@ SIGNALS = [
     ("vision-language models", 0.66),
 ]
 
+CURRENTLY = [
+    "stress-testing image watermarks against new attack families",
+    "building AI GATE Quest: AI & GATE concepts as a game",
+    "teaching Java & DSA labs at IIT Patna",
+]
+
 STACK = "Python · Java · PyTorch · OpenCV · Hugging Face · timm · Jupyter"
 
 CONTACT = [
@@ -53,13 +60,14 @@ LIVE_DEFAULTS = dict(repo_data="7", contrib_data="7", star_data="1", commit_data
 THEMES = {
     "dark_mode.svg": dict(bg="#0d1117", panel="#161b22", border="#30363d", text="#e6edf3",
                           dim="#7d8590", accent="#39c5cf", ok="#3fb950", warn="#f0883e",
-                          bad="#f85149", track="#21262d", wm_on="#0e1319"),
+                          bad="#f85149", track="#21262d", wm_on="#0e1319", mode="dark", ink="#dbe7ee"),
     "light_mode.svg": dict(bg="#ffffff", panel="#f6f8fa", border="#d0d7de", text="#1f2328",
                            dim="#656d76", accent="#0a7ea4", ok="#1a7f37", warn="#bc4c00",
-                           bad="#cf222e", track="#eaeef2", wm_on="#fcfcfc"),
+                           bad="#cf222e", track="#eaeef2", wm_on="#fcfcfc", mode="light", ink="#1f2328"),
 }
 
-W, H = 985, 640
+W, H = 985, 712
+PANEL_H = 558
 FONT = "ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace"
 
 
@@ -80,14 +88,45 @@ def age_string(today=None):
     return f"{p(y, 'year')}, {p(m, 'month')}, {p(d, 'day')}"
 
 
-def load_art():
+def load_portrait():
     try:
-        lines = [l.rstrip("\n") for l in open("cache/ascii.txt", encoding="utf-8")]
+        return json.load(open("cache/portrait.json", encoding="utf-8"))
     except FileNotFoundError:
-        lines = []
-    while lines and not lines[-1].strip():
-        lines.pop()
-    return lines[:25]
+        print("no cache/portrait.json: run binary_portrait.py photo.jpg first")
+        return None
+
+
+def portrait_svg(P, c, cell, x0, y0):
+    """One <text> per (row, brightness class); each digit placed by its own x so any font lines up."""
+    levels = "abcdefghij"
+    css, groups = [], {}
+    for i in range(10):
+        t = (i + .5) / 10
+        op = (.13 + .87 * t ** 2.1) if c["mode"] == "dark" else (.05 + .95 * (1 - t) ** 1.7)
+        css.append(f".p{i}{{fill-opacity:{op:.2f}}}")
+        # background cells (uppercase in the grid): toned down so the face stays the focus
+        bop = op * (.75 if c["mode"] == "dark" else .38)
+        css.append(f".b{i}{{fill-opacity:{bop:.2f}}}")
+    css.append(".pb{fill-opacity:.045}")
+    out = [f'<style>.bp{{fill:{c["ink"]};font-size:7.6px;font-weight:800}}{"".join(css)}</style><g class="bp" text-anchor="middle">']
+    bits = P["bits"]
+    for r, line in enumerate(P["cells"]):
+        y = y0 + r * cell + cell * .8
+        row = {}
+        for col, ch in enumerate(line):
+            if ch == ".":
+                cls = "pb"
+            elif ch.isupper():
+                cls = f"b{levels.index(ch.lower())}"
+            else:
+                cls = f"p{levels.index(ch)}"
+            row.setdefault(cls, ([], []))
+            row[cls][0].append(f"{x0 + col * cell + cell / 2:g}")
+            row[cls][1].append(bits[r * P["cols"] + col])
+        for cls, (xs, ds) in row.items():
+            out.append(f'<text class="{cls}" y="{y:g}" x="{" ".join(xs)}">{"".join(ds)}</text>')
+    out.append("</g>")
+    return "\n".join(out)
 
 
 def watermark_bits(payload):
@@ -123,7 +162,7 @@ text, tspan {{ white-space: pre; }}
 .ok  {{ fill: {c['ok']}; }}
 .scan {{ animation: scan 4.5s cubic-bezier(.45,0,.55,1) infinite; }}
 .pulse {{ animation: pulse 1.6s ease-in-out infinite; }}
-@keyframes scan {{ 0% {{ transform: translateY(0); opacity: 0; }} 8% {{ opacity: 1; }} 92% {{ opacity: 1; }} 100% {{ transform: translateY(452px); opacity: 0; }} }}
+@keyframes scan {{ 0% {{ transform: translateY(0); opacity: 0; }} 8% {{ opacity: 1; }} 92% {{ opacity: 1; }} 100% {{ transform: translateY(545px); opacity: 0; }} }}
 @keyframes pulse {{ 0%,100% {{ opacity: 1; }} 50% {{ opacity: .25; }} }}
 @media (prefers-reduced-motion: reduce) {{ .scan, .pulse {{ animation: none; }} .scan {{ opacity: 0; }} }}
 </style>
@@ -133,13 +172,13 @@ text, tspan {{ white-space: pre; }}
     <stop offset=".85" stop-color="{c['accent']}" stop-opacity=".22"/>
     <stop offset="1" stop-color="{c['accent']}" stop-opacity=".9"/>
   </linearGradient>
-  <radialGradient id="heat" cx=".5" cy=".45" r=".55">
+  <radialGradient id="heat_unused" cx=".5" cy=".45" r=".55">
     <stop offset="0" stop-color="{c['ok']}" stop-opacity=".22"/>
     <stop offset=".6" stop-color="{c['ok']}" stop-opacity=".08"/>
     <stop offset="1" stop-color="{c['ok']}" stop-opacity="0"/>
   </radialGradient>
-  <clipPath id="panelclip"><rect x="20" y="64" width="330" height="470" rx="10"/></clipPath>
-  <clipPath id="typeclip"><rect x="40" y="566" height="30" width="0">
+  <clipPath id="panelclip"><rect x="20" y="64" width="330" height="{PANEL_H}" rx="10"/></clipPath>
+  <clipPath id="typeclip"><rect x="40" y="650" height="30" width="0">
     <animate attributeName="width" values="0;905;905;0" keyTimes="0;.55;.95;1" dur="9s" repeatCount="indefinite"/>
   </rect></clipPath>
 </defs>
@@ -154,26 +193,35 @@ text, tspan {{ white-space: pre; }}
              f'<tspan class="ok" font-weight="700">VERIFIED</tspan></text>'
              f'<line x1="20" y1="50" x2="965" y2="50" stroke="{c["border"]}"/>')
 
-    # --- left panel: portrait under analysis
-    o.append(f'<rect x="20" y="64" width="330" height="470" rx="10" fill="{c["panel"]}" stroke="{c["border"]}"/>')
+    # --- left panel: binary portrait under analysis
+    P = load_portrait()
+    o.append(f'<rect x="20" y="64" width="330" height="{PANEL_H}" rx="10" fill="{c["panel"]}" stroke="{c["border"]}"/>')
     o.append('<g clip-path="url(#panelclip)">')
-    o.append('<ellipse cx="185" cy="250" rx="140" ry="190" fill="url(#heat)"/>')
-    o.append('<text class="art">')
-    for i, line in enumerate(load_art()):
-        o.append(f'<tspan x="38" y="{106 + i * 15.6:.1f}">{escape(line)}</tspan>')
-    o.append('</text>')
+    if P:
+        cell, x0, y0 = 5, 185 - P["cols"] * 5 / 2, 64 + (PANEL_H - P["rows"] * 5 - 80) // 2
+        o.append(portrait_svg(P, c, cell, x0, y0))
+        fx, fy, fw, fh = P["face"]
+        bx, by, bw, bh = x0 + fx * cell, y0 + fy * cell, fw * cell, fh * cell
+        art_bottom = y0 + P["rows"] * cell
+    else:
+        bx, by, bw, bh, art_bottom = 70, 100, 222, 290, 490
     o.append(f'<rect class="scan" x="20" y="22" width="330" height="60" fill="url(#beam)"/>')
     o.append('</g>')
     # face-detection brackets
-    bx, by, bw, bh, L = 70, 100, 222, 290, 18
-    br = c["accent"]
+    L, br = 16, c["accent"]
     for (x, y, dx, dy) in [(bx, by, 1, 1), (bx + bw, by, -1, 1), (bx, by + bh, 1, -1), (bx + bw, by + bh, -1, -1)]:
-        o.append(f'<path d="M{x} {y + dy * L} V{y} H{x + dx * L}" fill="none" stroke="{br}" stroke-width="2"/>')
-    o.append(f'<rect x="{bx}" y="{by - 20}" width="150" height="17" rx="3" fill="{br}"/>'
-             f'<text x="{bx + 6}" y="{by - 7}" font-size="11px" fill="{c["bg"]}" font-weight="700">face_0 · REAL · 0.997</text>')
+        o.append(f'<path d="M{x:.0f} {y + dy * L:.0f} V{y:.0f} H{x + dx * L:.0f}" fill="none" stroke="{br}" stroke-width="2"/>')
+    o.append(f'<rect x="{bx:.0f}" y="{by - 20:.0f}" width="150" height="17" rx="3" fill="{br}"/>'
+             f'<text x="{bx + 6:.0f}" y="{by - 7:.0f}" font-size="11px" fill="{c["bg"]}" font-weight="700">face_0 · REAL · 0.997</text>')
     digest = hashlib.sha256(USER.encode()).hexdigest()
-    o.append(f'<text x="36" y="508" font-size="11px" class="dim">sha256  <tspan class="val">{digest[:12]}…{digest[-6:]}</tspan></text>'
-             f'<text x="36" y="524" font-size="11px" class="dim">wm      <tspan class="ok">✓ 40-bit payload embedded</tspan></text>')
+    n_bits = P["cols"] * P["rows"] if P else 0
+    reps = n_bits / (8 * P["payload_len"]) if P else 0
+    cap = [("pixels", f'<tspan class="val">{P["cols"]}×{P["rows"]} → {n_bits:,} bits</tspan>' if P else ""),
+           ("payload", f'<tspan class="val">my bio in ASCII, ×{reps:.1f}</tspan>'),
+           ("sha256", f'<tspan class="val">{digest[:12]}…{digest[-6:]}</tspan>'),
+           ("wm", '<tspan class="ok">✓ 40-bit watermark embedded</tspan>')]
+    for i, (k, v) in enumerate(cap):
+        o.append(f'<text x="36" y="{art_bottom + 18 + i * 16:.0f}" font-size="11px"><tspan class="dim">{k:<9}</tspan>{v}</text>')
 
     # --- right column
     y = 80
@@ -219,19 +267,25 @@ text, tspan {{ white-space: pre; }}
     y += 22
     o.append(f'<text x="396" y="{y}">' + "   ".join(
         f'<tspan class="dim">{escape(k)} </tspan><tspan class="val">{escape(v)}</tspan>' for k, v in CONTACT) + '</text>')
-    if y > 538:
+
+    y += 31
+    o.append(section(y, "06", "CURRENTLY", c))
+    for item in CURRENTLY:
+        y += 21
+        o.append(f'<text x="396" y="{y}"><tspan fill="{c["accent"]}">▸ </tspan><tspan class="val">{escape(item)}</tspan></text>')
+    if y > 622:
         raise SystemExit(f"right column overflows ({y}px); remove a row")
 
     # --- bottom: verification terminal
-    o.append(f'<rect x="20" y="556" width="945" height="46" rx="8" fill="{c["panel"]}" stroke="{c["border"]}"/>')
-    o.append(f'<text x="36" y="584" font-size="13px"><tspan fill="{c["accent"]}">$</tspan>'
+    o.append(f'<rect x="20" y="640" width="945" height="46" rx="8" fill="{c["panel"]}" stroke="{c["border"]}"/>')
+    o.append(f'<text x="36" y="668" font-size="13px"><tspan fill="{c["accent"]}">$</tspan>'
              f'<tspan class="val"> verify --provenance {USER}</tspan></text>')
-    o.append(f'<g clip-path="url(#typeclip)"><text x="310" y="584" font-size="13px" class="ok">{escape(VERIFY_LINE)}</text></g>')
+    o.append(f'<g clip-path="url(#typeclip)"><text x="310" y="668" font-size="13px" class="ok">{escape(VERIFY_LINE)}</text></g>')
 
     # --- hidden watermark: 40 cells, 1-bits a hair off the background colour
     bits = watermark_bits(WATERMARK)
     x0 = (W - len(bits) * 6) // 2
-    cells = "".join(f'<rect x="{x0 + i * 6}" y="{H - 22}" width="4" height="4" fill="{c["wm_on"]}"/>'
+    cells = "".join(f'<rect x="{x0 + i * 6}" y="{H - 17}" width="4" height="4" fill="{c["wm_on"]}"/>'
                     for i, b in enumerate(bits) if b == "1")
     o.append(f'<g id="wm" data-hint="40 cells, MSB first, 8 bits per char">{cells}</g>')
 
